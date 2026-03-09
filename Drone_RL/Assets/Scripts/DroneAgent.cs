@@ -5,16 +5,26 @@ using Unity.MLAgents.Sensors;
 
 public class DroneAgent : Agent
 {
-    private Transform target;
+    [SerializeField] private Transform target;
     private Rigidbody rb;
+
+    private int _currentEpisode = 0;
+    private float _cumulativeReward = 0f;
 
     public override void Initialize()
     {
+        Debug.Log("DroneAgent initialized");
         rb = GetComponent<Rigidbody>();
+
+        _currentEpisode = 0;
+        _cumulativeReward = 0f;
     }
 
     public override void OnEpisodeBegin()
     {
+        Debug.Log("New Episode begins");
+        _currentEpisode++;
+
         // Reset dynamics
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
@@ -42,6 +52,9 @@ public class DroneAgent : Agent
         float motor3 = (actions.ContinuousActions[2] + 1f) * 0.5f;
         float motor4 = (actions.ContinuousActions[3] + 1f) * 0.5f;
 
+        // Since we are building the drone from scratch instead of importing preexisting models
+        // We'll just simply apply the force at each motor's position, and let Unity's physics engine
+        // figure out the rest. (Gravity, torque, drag, etc...)
         ApplyMotorForce(motor1, new Vector3(0.3f, 0.1f, 0.3f));
         ApplyMotorForce(motor2, new Vector3(-0.3f, 01f, 0.3f));
         ApplyMotorForce(motor3, new Vector3(0.3f, 0.1f, -0.3f));
@@ -62,7 +75,8 @@ public class DroneAgent : Agent
             EndEpisode();
         }
         
-        // Existential penalty to encourage speed
+        // Existential penalty to encourage speed 
+        // Shouldn't be too big, else the agent might do crash into the ground to minimize negative score
         AddReward(-0.001f);
     }
 
@@ -70,6 +84,18 @@ public class DroneAgent : Agent
     {
         float maxThrust = 10f; // Tune this based on drone mass
         rb.AddForceAtPosition(transform.up * thrust * maxThrust, transform.TransformPoint(localPosition));
+    }
+
+    // For debugging
+    public override void Heuristic(in ActionBuffers actionsOut)
+    {
+        Debug.Log("Heuristics was called");
+        var continuousActionsOut = actionsOut.ContinuousActions;
+        // Simple mapping for testing
+        continuousActionsOut[0] = Input.GetKey(KeyCode.W) ? 1f : -1f;
+        continuousActionsOut[1] = Input.GetKey(KeyCode.E) ? 1f : -1f;
+        continuousActionsOut[2] = Input.GetKey(KeyCode.A) ? 1f : -1f;
+        continuousActionsOut[3] = Input.GetKey(KeyCode.S) ? 1f : -1f;
     }
 
 }
