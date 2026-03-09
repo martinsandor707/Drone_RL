@@ -2,28 +2,29 @@ using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
+using Unity.VisualScripting;
 
 public class DroneAgent : Agent
 {
     [SerializeField] private Transform target;
     private Rigidbody rb;
 
-    private int _currentEpisode = 0;
-    private float _cumulativeReward = 0f;
+    [HideInInspector] public int CurrentEpisode = 0;
+    [HideInInspector] public float CumulativeReward = 0f;
 
     public override void Initialize()
     {
         Debug.Log("DroneAgent initialized");
         rb = GetComponent<Rigidbody>();
 
-        _currentEpisode = 0;
-        _cumulativeReward = 0f;
+        CurrentEpisode = 0;
+        CumulativeReward = 0f;
     }
 
     public override void OnEpisodeBegin()
     {
         Debug.Log("New Episode begins");
-        _currentEpisode++;
+        CurrentEpisode++;
 
         // Reset dynamics
         rb.linearVelocity = Vector3.zero;
@@ -60,18 +61,12 @@ public class DroneAgent : Agent
         ApplyMotorForce(motor3, new Vector3(0.3f, 0.1f, -0.3f));
         ApplyMotorForce(motor4, new Vector3(-0.3f, 0.1f, -0.3f));
 
-        // Reward shaping
-        float distanceToTarget = Vector3.Distance(transform.localPosition, target.localPosition);
-        
-        if (distanceToTarget < 1.0f)
+
+         if (transform.localPosition.y > 10f)
         {
-            SetReward(1.0f);
-            EndEpisode();
-        }
-        else if (transform.localPosition.y < 0 || transform.localPosition.y > 10f)
-        {
-            // Penalize crashing or flying away
-            SetReward(-1.0f);
+            // Penalize flying away
+            AddReward(-1.0f);
+            CumulativeReward = GetCumulativeReward();
             EndEpisode();
         }
         
@@ -96,6 +91,26 @@ public class DroneAgent : Agent
         continuousActionsOut[1] = Input.GetKey(KeyCode.E) ? 1f : -1f;
         continuousActionsOut[2] = Input.GetKey(KeyCode.A) ? 1f : -1f;
         continuousActionsOut[3] = Input.GetKey(KeyCode.S) ? 1f : -1f;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("target"))
+        {
+            AddReward(10.0f);
+            CumulativeReward = GetCumulativeReward();
+            EndEpisode();
+        }
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("ground"))
+        {
+            AddReward(-1.0f);
+            CumulativeReward = GetCumulativeReward();
+            EndEpisode();
+        }      
     }
 
 }
