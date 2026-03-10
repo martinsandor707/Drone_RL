@@ -57,7 +57,7 @@ public class DroneAgent : Agent
         // We'll just simply apply the force at each motor's position, and let Unity's physics engine
         // figure out the rest. (Gravity, torque, drag, etc...)
         ApplyMotorForce(motor1, new Vector3(0.3f, 0.1f, 0.3f));
-        ApplyMotorForce(motor2, new Vector3(-0.3f, 01f, 0.3f));
+        ApplyMotorForce(motor2, new Vector3(-0.3f, 0.1f, 0.3f));
         ApplyMotorForce(motor3, new Vector3(0.3f, 0.1f, -0.3f));
         ApplyMotorForce(motor4, new Vector3(-0.3f, 0.1f, -0.3f));
 
