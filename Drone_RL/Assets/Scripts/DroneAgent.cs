@@ -8,7 +8,7 @@ public class DroneAgent : Agent
 {
     [SerializeField] private Transform target;
     private Rigidbody rb;
-
+    private float previousDistanceToTarget;
     [HideInInspector] public int CurrentEpisode = 0;
     [HideInInspector] public float CumulativeReward = 0f;
 
@@ -34,6 +34,9 @@ public class DroneAgent : Agent
         transform.localPosition = new Vector3(Random.Range(-4f, 4f), 2f, Random.Range(-4f, 4f));
         transform.localRotation = Quaternion.Euler(0, Random.Range(0f, 360f), 0);
         target.localPosition = new Vector3(Random.Range(-4f, 4f), Random.Range(1f, 5f), Random.Range(-4f, 4f));
+
+        // Initialize distance tracker
+        previousDistanceToTarget = Vector3.Distance(transform.localPosition, target.localPosition);
     }
 
     public override void CollectObservations(VectorSensor sensor)
@@ -61,8 +64,43 @@ public class DroneAgent : Agent
         ApplyMotorForce(motor3, new Vector3(0.3f, 0.1f, -0.3f));
         ApplyMotorForce(motor4, new Vector3(-0.3f, 0.1f, -0.3f));
 
+        // 1. Reaching the target
+        float currentDistanceToTarget = Vector3.Distance(transform.localPosition, target.localPosition);
+        float distanceDelta = previousDistanceToTarget - currentDistanceToTarget;
+        
+        // Reward getting closer, penalize moving further away. 
+        // Scaled by 0.1 to prevent overpowering the final +10 sparse reward.
+        AddReward(distanceDelta * 0.05f); 
+        previousDistanceToTarget = currentDistanceToTarget;
 
-         if (transform.localPosition.y > 10f)
+        // 2. Hover/Upright bonus
+        // Dot product approaches 1 when perfectly upright, < 0 when upside down.
+        // This was needed because during testing, the drone frequently flipped upside down and crashed
+        float uprightBonus = Vector3.Dot(transform.up, Vector3.up);
+        if (uprightBonus > 0.8f && transform.localPosition.y > 0.5f)
+        {
+            // Reward stable hovering to counteract the existential penalty
+            AddReward(0.002f); 
+        }
+        else if (uprightBonus < 0.5f) 
+        {
+            AddReward(-0.002f);
+        }
+
+        // 3. Angular velocity stabilization
+        float angularSpeed = rb.angularVelocity.magnitude;
+
+        // Non-linear penalty: penalize heavily for fast spinning, negligible for minor corrections
+        AddReward(-0.0005f * (angularSpeed * angularSpeed)); 
+
+        // Strict dense reward for extreme rotational stability
+        if (angularSpeed < 0.5f && uprightBonus > 0.8f)
+        {
+            AddReward(0.001f);
+        }
+
+        // 4. Boundary Penalties
+        if (transform.localPosition.y > 10f || transform.localPosition.y < 0f)
         {
             // Penalize flying away
             AddReward(-1.0f);
@@ -88,16 +126,16 @@ public class DroneAgent : Agent
         var continuousActionsOut = actionsOut.ContinuousActions;
         // Simple mapping for testing
         continuousActionsOut[0] = Input.GetKey(KeyCode.W) ? 1f : -1f;
-        continuousActionsOut[1] = Input.GetKey(KeyCode.E) ? 1f : -1f;
-        continuousActionsOut[2] = Input.GetKey(KeyCode.A) ? 1f : -1f;
-        continuousActionsOut[3] = Input.GetKey(KeyCode.S) ? 1f : -1f;
+        continuousActionsOut[1] = Input.GetKey(KeyCode.W) ? 1f : -1f;
+        continuousActionsOut[2] = Input.GetKey(KeyCode.W) ? 1f : -1f;
+        continuousActionsOut[3] = Input.GetKey(KeyCode.W) ? 1f : -1f;
     }
 
     private void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.CompareTag("target"))
         {
-            AddReward(10.0f);
+            AddReward(2.0f);
             CumulativeReward = GetCumulativeReward();
             EndEpisode();
         }
