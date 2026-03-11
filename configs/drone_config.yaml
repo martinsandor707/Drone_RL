@@ -18,12 +18,62 @@ behaviors:
       extrinsic:
         gamma: 0.99
         strength: 1.0
-      curiosity:
-        gamma: 0.99
-        strength: 0.02
-        network_settings:
-          hidden_units: 256
-        learning_rate: 0.0003
-    max_steps: 50000
+      # curiosity:
+      #   gamma: 0.99
+      #   strength: 0.02
+      #   network_settings:
+      #     hidden_units: 256
+      #   learning_rate: 0.0003
+    max_steps: 5000000
     time_horizon: 64
     summary_freq: 10000
+
+# Curriculum Learning Definition
+environment_parameters:
+  target_spawn_radius:
+    curriculum:
+      - name: Lesson0_Hover_Above
+        completion_criteria:
+          measure: reward
+          behavior: DroneAgent
+          signal_smoothing: true
+          min_lesson_length: 100
+          threshold: 1.5
+        value:
+          sampler_type: uniform
+          sampler_parameters:
+            min_value: 0.0
+            max_value: 0.5
+            
+      - name: Lesson1_Close_Proximity
+        completion_criteria:
+          measure: reward
+          behavior: DroneAgent
+          signal_smoothing: true
+          min_lesson_length: 100
+          threshold: 1.5
+        value:
+          sampler_type: uniform
+          sampler_parameters:
+            min_value: 0.5
+            max_value: 1.5
+            
+      - name: Lesson2_Medium_Range
+        completion_criteria:
+          measure: reward
+          behavior: DroneAgent
+          signal_smoothing: true
+          min_lesson_length: 100
+          threshold: 1.5
+        value:
+          sampler_type: uniform
+          sampler_parameters:
+            min_value: 1.5
+            max_value: 2.5
+            
+      - name: Lesson3_Full_Map
+        value:
+          sampler_type: uniform
+          sampler_parameters:
+            min_value: 2.5
+            max_value: 4.0

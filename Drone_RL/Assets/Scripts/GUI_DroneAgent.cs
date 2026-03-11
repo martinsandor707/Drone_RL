@@ -1,3 +1,4 @@
+using Unity.AppUI.UI;
 using UnityEngine;
 
 public class GUI_DroneAgent : MonoBehaviour
@@ -40,6 +41,17 @@ public class GUI_DroneAgent : MonoBehaviour
     void Update()
     {
         
+    }
+
+        // Start is called once before the first execution of Update after the MonoBehaviour is created
+    public void slowTime()
+    {
+        Time.timeScale = 0.2f;
+        
+    }
+    public void normalSpeed()
+    {
+        Time.timeScale=1;
     }
 
 }

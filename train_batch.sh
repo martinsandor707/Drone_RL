@@ -30,6 +30,7 @@ for config_file in "$CONFIG_DIR"/*.yaml; do
     mlagents-learn "$config_file" \
         --env="$ENV_PATH" \
         --run-id="$run_id" \
+        --num-envs=8 \
         --no-graphics --force
 
     echo "COMPLETED TRAINING RUN: $run_id"

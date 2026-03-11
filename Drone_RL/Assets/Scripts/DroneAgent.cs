@@ -23,8 +23,10 @@ public class DroneAgent : Agent
 
     public override void OnEpisodeBegin()
     {
-        Debug.Log("New Episode begins");
         CurrentEpisode++;
+
+        // Fetch curriculum parameter from Python YAML (defaults to 4.0f if not training via CLI)
+        float spawnRadius = Academy.Instance.EnvironmentParameters.GetWithDefault("target_spawn_radius", 4.0f);
 
         // Reset dynamics
         rb.linearVelocity = Vector3.zero;
@@ -33,7 +35,39 @@ public class DroneAgent : Agent
         // Randomize positions
         transform.localPosition = new Vector3(Random.Range(-4f, 4f), 2f, Random.Range(-4f, 4f));
         transform.localRotation = Quaternion.Euler(0, Random.Range(0f, 360f), 0);
-        target.localPosition = new Vector3(Random.Range(-4f, 4f), Random.Range(1f, 5f), Random.Range(-4f, 4f));
+
+        // Spawn target strictly within the curriculum radius relative to the drone
+        // We use Random.insideUnitSphere to get a uniform distribution in 3D space
+        Vector3 randomOffset = Random.insideUnitSphere * spawnRadius;
+
+
+        // target.localPosition = new Vector3(Random.Range(-4f, 4f), Random.Range(1f, 5f), Random.Range(-4f, 4f));
+        // Ensure the target is always placed above the ground, and ideally slightly above the drone
+        float targetY = Mathf.Max(1.0f, transform.localPosition.y + Mathf.Abs(randomOffset.y) + 0.5f);
+        
+        // if (spawnRadius <= 0.5f)
+        // {
+        //     // Place target directly above drone for first lesson
+        //     target.localPosition = new Vector3(
+        //     transform.localPosition.x , 
+        //     targetY, 
+        //     transform.localPosition.z
+        // );
+        // }
+        // else
+        // {
+        //     target.localPosition = new Vector3(
+        //     transform.localPosition.x + randomOffset.x, 
+        //     targetY, 
+        //     transform.localPosition.z + randomOffset.z
+        // );
+        // }
+
+        target.localPosition = new Vector3(
+            transform.localPosition.x + randomOffset.x, 
+            targetY, 
+            transform.localPosition.z + randomOffset.z
+        );
 
         // Initialize distance tracker
         previousDistanceToTarget = Vector3.Distance(transform.localPosition, target.localPosition);
@@ -70,6 +104,7 @@ public class DroneAgent : Agent
         
         // Reward getting closer, penalize moving further away. 
         // Scaled by 0.1 to prevent overpowering the final +10 sparse reward.
+        Debug.Log("Reward for distanceDelta: " +distanceDelta * 0.05f);
         AddReward(distanceDelta * 0.05f); 
         previousDistanceToTarget = currentDistanceToTarget;
 
@@ -80,49 +115,70 @@ public class DroneAgent : Agent
         if (uprightBonus > 0.8f && transform.localPosition.y > 0.5f)
         {
             // Reward stable hovering to counteract the existential penalty
+            Debug.Log("Reward stable hovering position: " +0.002f);
             AddReward(0.002f); 
         }
         else if (uprightBonus < 0.5f) 
         {
+            Debug.Log("Reward unstable position: " + (-0.002f));
             AddReward(-0.002f);
         }
 
-        // 3. Angular velocity stabilization
-        float angularSpeed = rb.angularVelocity.magnitude;
+        // float x_rotation = transform.rotation.x;
+        // float z_rotation = transform.rotation.z;
 
-        // Non-linear penalty: penalize heavily for fast spinning, negligible for minor corrections
-        AddReward(-0.0005f * (angularSpeed * angularSpeed)); 
+        // if (Mathf.Abs(x_rotation) > 0.4f || Mathf.Abs(z_rotation) > 0.4f)
+        // {
+        //     AddReward(-0.02f);
+        // }
+        // else
+        // {
+        //     AddReward(0.002f);
+        // }
+
+
+
+        // 3. Angular velocity stabilization
+        float angularSpeed = Mathf.Clamp(rb.angularVelocity.magnitude, 0f, 50f);
+        // penalize heavily for fast spinning, negligible for minor corrections
+        Debug.Log("Penalty for angular speed: " + (-0.0005f * angularSpeed));
+        AddReward(-0.0005f * angularSpeed);
 
         // Strict dense reward for extreme rotational stability
         if (angularSpeed < 0.5f && uprightBonus > 0.8f)
         {
+            Debug.Log("Reward for rotational stability: " + 0.001f);
             AddReward(0.001f);
         }
 
         // 4. Boundary Penalties
-        if (transform.localPosition.y > 10f || transform.localPosition.y < 0f)
+        if (transform.localPosition.y > 10f || transform.localPosition.y < -5f ||
+            Mathf.Abs(transform.localPosition.x) > 15f || Mathf.Abs(transform.localPosition.z) > 15f)
         {
             // Penalize flying away
+            Debug.Log("Penalty for getting out of bounds: " + -1);
+
             AddReward(-1.0f);
             CumulativeReward = GetCumulativeReward();
+            Debug.Log("Episode over. Cumulative reward: " +CumulativeReward);
             EndEpisode();
         }
         
         // Existential penalty to encourage speed 
         // Shouldn't be too big, else the agent might do crash into the ground to minimize negative score
+        Debug.Log("Existential penalty: " + -0.001f);
         AddReward(-0.001f);
     }
 
     private void ApplyMotorForce(float thrust, Vector3 localPosition)
     {
-        float maxThrust = 10f; // Tune this based on drone mass
+        float maxThrust = 3f; // Tune this based on drone mass
         rb.AddForceAtPosition(transform.up * thrust * maxThrust, transform.TransformPoint(localPosition));
     }
 
     // For debugging
     public override void Heuristic(in ActionBuffers actionsOut)
     {
-        Debug.Log("Heuristics was called");
         var continuousActionsOut = actionsOut.ContinuousActions;
         // Simple mapping for testing
         continuousActionsOut[0] = Input.GetKey(KeyCode.W) ? 1f : -1f;
@@ -135,8 +191,10 @@ public class DroneAgent : Agent
     {
         if (other.gameObject.CompareTag("target"))
         {
+            Debug.Log("Reward for reaching target: " +2.0f);
             AddReward(2.0f);
             CumulativeReward = GetCumulativeReward();
+            Debug.Log("Episode over. Cumulative reward: " +CumulativeReward);
             EndEpisode();
         }
     }
@@ -145,8 +203,10 @@ public class DroneAgent : Agent
     {
         if (collision.gameObject.CompareTag("ground"))
         {
+            Debug.Log("Penalty for crashing drone: " + -1.0f);
             AddReward(-1.0f);
             CumulativeReward = GetCumulativeReward();
+            Debug.Log("Episode over. Cumulative reward: " +CumulativeReward);
             EndEpisode();
         }      
     }
