@@ -1,0 +1,42 @@
+{
+    "name": "root",
+    "metadata": {
+        "timer_format_version": "0.1.0",
+        "start_time_seconds": "1773135687",
+        "python_version": "3.10.12 (main, Jul  5 2023, 18:54:27) [GCC 11.2.0]",
+        "command_line_arguments": "/opt/miniconda3/envs/unity-rl/bin/mlagents-learn configs/drone_config_lr0.001_hu128_nl2.yaml --env=build/DroneEnv.x86_64 --run-id=drone_config_lr0.001_hu128_nl2 --no-graphics",
+        "mlagents_version": "1.1.0",
+        "mlagents_envs_version": "1.1.0",
+        "communication_protocol_version": "1.5.0",
+        "pytorch_version": "2.1.1+cu121",
+        "numpy_version": "1.23.5",
+        "end_time_seconds": "1773135688"
+    },
+    "total": 0.6764522149996992,
+    "count": 1,
+    "self": 0.11713109499851271,
+    "children": {
+        "run_training.setup": {
+            "total": 0.009265774000596139,
+            "count": 1,
+            "self": 0.009265774000596139
+        },
+        "TrainerController.start_learning": {
+            "total": 0.5500553460005904,
+            "count": 1,
+            "self": 4.0332000025955494e-05,
+            "children": {
+                "TrainerController._reset_env": {
+                    "total": 0.550002083000436,
+                    "count": 1,
+                    "self": 0.550002083000436
+                },
+                "TrainerController._save_models": {
+                    "total": 1.2931000128446613e-05,
+                    "count": 1,
+                    "self": 1.2931000128446613e-05
+                }
+            }
+        }
+    }
+}

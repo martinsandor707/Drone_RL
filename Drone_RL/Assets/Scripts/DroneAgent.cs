@@ -14,15 +14,16 @@ public class DroneAgent : Agent
 
     public override void Initialize()
     {
-        Debug.Log("DroneAgent initialized");
         rb = GetComponent<Rigidbody>();
-
+        rb.centerOfMass = Vector3.zero;
+        Debug.Log("DroneAgent initialized. CoM:" + rb.centerOfMass);
         CurrentEpisode = 0;
         CumulativeReward = 0f;
     }
 
     public override void OnEpisodeBegin()
     {
+        
         CurrentEpisode++;
 
         // Fetch curriculum parameter from Python YAML (defaults to 4.0f if not training via CLI)
@@ -40,29 +41,13 @@ public class DroneAgent : Agent
         // We use Random.insideUnitSphere to get a uniform distribution in 3D space
         Vector3 randomOffset = Random.insideUnitSphere * spawnRadius;
 
+        Debug.Log("New episode begins! Velocities:\nx = " + rb.linearVelocity.x +"\ny = " + rb.linearVelocity.y +"\nz = " + rb.linearVelocity.z);
+
 
         // target.localPosition = new Vector3(Random.Range(-4f, 4f), Random.Range(1f, 5f), Random.Range(-4f, 4f));
         // Ensure the target is always placed above the ground, and ideally slightly above the drone
         float targetY = Mathf.Max(1.0f, transform.localPosition.y + Mathf.Abs(randomOffset.y) + 0.5f);
         
-        // if (spawnRadius <= 0.5f)
-        // {
-        //     // Place target directly above drone for first lesson
-        //     target.localPosition = new Vector3(
-        //     transform.localPosition.x , 
-        //     targetY, 
-        //     transform.localPosition.z
-        // );
-        // }
-        // else
-        // {
-        //     target.localPosition = new Vector3(
-        //     transform.localPosition.x + randomOffset.x, 
-        //     targetY, 
-        //     transform.localPosition.z + randomOffset.z
-        // );
-        // }
-
         target.localPosition = new Vector3(
             transform.localPosition.x + randomOffset.x, 
             targetY, 
@@ -84,26 +69,64 @@ public class DroneAgent : Agent
 
     public override void OnActionReceived(ActionBuffers actions)
     {
+        // New idea: Teaching how to use the individual motors proved too difficult, so we'll model drone controllers instead.
+        // Traditionally drones use a PID controller (Proportional-Integral-Derivative), which determine movement based on a number of factors, but for our purposes, we will use the following inputs:
+        // 1. Collective Thrust of motors
+        // 2. Amount of pitch (rotation around X axis) --> move forward/back
+        // 3. Amount of roll (rotation around Z axis)  --> move left/right 
+        // 4. Amount of yaw (rotation around Y axis)   --> turn left/right (in place)
+
+        // From a physics standpoint, yaw is possible because motors in different diagonals rotate in opposite directions
+        // So e.g. the same yaw will effect M2 positively, and M1 negatively
+
+        //     Front of the drone
+        //            ^
+        //            |
+
+        //(CCW)   M1       M2 (clockwise, CW)
+        //         \     /
+        //          \   /
+        //           \ /
+        //           / \
+        //          /   \
+        //         /     \
+        //(CW)    M4      M3 (counter clockwise, CCW)
+
         // 4 Continuous Actions mapped from [-1, 1] to [0, 1] for thrust
-        float motor1 = (actions.ContinuousActions[0] + 1f) * 0.5f;
-        float motor2 = (actions.ContinuousActions[1] + 1f) * 0.5f;
-        float motor3 = (actions.ContinuousActions[2] + 1f) * 0.5f;
-        float motor4 = (actions.ContinuousActions[3] + 1f) * 0.5f;
+        float stable_hover_thrust = 0.5f;
+        // float collective_thrust = stable_hover_thrust + 0.3f * actions.ContinuousActions[0]; // [0.2,0.8]
+        // float pitch = 0.3f * actions.ContinuousActions[1];
+        // float roll  = 0.3f * actions.ContinuousActions[2];
+        // float yaw   = 0.15f * actions.ContinuousActions[3];
+
+        // float motor1 = Mathf.Clamp(collective_thrust + pitch + roll - yaw, 0, 1);
+        // float motor2 = Mathf.Clamp(collective_thrust + pitch - roll + yaw, 0, 1);
+        // float motor3 = Mathf.Clamp(collective_thrust - pitch - roll - yaw, 0, 1);
+        // float motor4 = Mathf.Clamp(collective_thrust - pitch + roll - yaw, 0, 1);
+
+        float motor1 = Mathf.Clamp(actions.ContinuousActions[0], 0, 1); // [0.2, 0.8]
+        float motor2 = Mathf.Clamp(actions.ContinuousActions[1], 0, 1);
+        float motor3 = Mathf.Clamp(actions.ContinuousActions[2], 0, 1);
+        float motor4 = Mathf.Clamp(actions.ContinuousActions[3], 0, 1);
+
+        // TODO: Consider renormalizing the motors after mixing
+        
+        
 
         // Since we are building the drone from scratch instead of importing preexisting models
         // We'll just simply apply the force at each motor's position, and let Unity's physics engine
         // figure out the rest. (Gravity, torque, drag, etc...)
         ApplyMotorForce(motor1, new Vector3(0.3f, 0.1f, 0.3f));
-        ApplyMotorForce(motor2, new Vector3(-0.3f, 0.1f, 0.3f));
-        ApplyMotorForce(motor3, new Vector3(0.3f, 0.1f, -0.3f));
-        ApplyMotorForce(motor4, new Vector3(-0.3f, 0.1f, -0.3f));
+        ApplyMotorForce(motor2, new Vector3(0.3f, 0.1f, -0.3f));
+        ApplyMotorForce(motor3, new Vector3(-0.3f, 0.1f, -0.3f));
+        ApplyMotorForce(motor4, new Vector3(-0.3f, 0.1f, 0.3f));
 
         // 1. Reaching the target
         float currentDistanceToTarget = Vector3.Distance(transform.localPosition, target.localPosition);
         float distanceDelta = previousDistanceToTarget - currentDistanceToTarget;
         
         // Reward getting closer, penalize moving further away. 
-        // Scaled by 0.1 to prevent overpowering the final +10 sparse reward.
+        // Scaled by 0.05 to prevent overpowering the final +2 sparse reward.
         Debug.Log("Reward for distanceDelta: " +distanceDelta * 0.05f);
         AddReward(distanceDelta * 0.05f); 
         previousDistanceToTarget = currentDistanceToTarget;
@@ -123,19 +146,6 @@ public class DroneAgent : Agent
             Debug.Log("Reward unstable position: " + (-0.002f));
             AddReward(-0.002f);
         }
-
-        // float x_rotation = transform.rotation.x;
-        // float z_rotation = transform.rotation.z;
-
-        // if (Mathf.Abs(x_rotation) > 0.4f || Mathf.Abs(z_rotation) > 0.4f)
-        // {
-        //     AddReward(-0.02f);
-        // }
-        // else
-        // {
-        //     AddReward(0.002f);
-        // }
-
 
 
         // 3. Angular velocity stabilization
@@ -172,7 +182,9 @@ public class DroneAgent : Agent
 
     private void ApplyMotorForce(float thrust, Vector3 localPosition)
     {
-        float maxThrust = 3f; // Tune this based on drone mass
+        Debug.Log("Applying thrust to motor: " +thrust);
+        float hoverThrust = rb.mass * Mathf.Abs(Physics.gravity.y); // e.g. 9.8 * mass
+        float maxThrust = hoverThrust / (4 * 0.5f); // so that 4 motors at thrust=0.5 hover
         rb.AddForceAtPosition(transform.up * thrust * maxThrust, transform.TransformPoint(localPosition));
     }
 
@@ -180,11 +192,78 @@ public class DroneAgent : Agent
     public override void Heuristic(in ActionBuffers actionsOut)
     {
         var continuousActionsOut = actionsOut.ContinuousActions;
+        for (int i=0; i < continuousActionsOut.Length; i++)
+        {
+            continuousActionsOut[i] = 0.5f;
+        }
         // Simple mapping for testing
-        continuousActionsOut[0] = Input.GetKey(KeyCode.W) ? 1f : -1f;
-        continuousActionsOut[1] = Input.GetKey(KeyCode.W) ? 1f : -1f;
-        continuousActionsOut[2] = Input.GetKey(KeyCode.W) ? 1f : -1f;
-        continuousActionsOut[3] = Input.GetKey(KeyCode.W) ? 1f : -1f;
+        // continuousActionsOut[0] = 0.5f;
+        if (Input.GetKey(KeyCode.Space))
+        {
+            Debug.Log("Space pressed!");
+
+            continuousActionsOut[0]+=0.25f;
+            continuousActionsOut[1]+=0.25f;
+            continuousActionsOut[2]+=0.25f;
+            continuousActionsOut[3]+=0.25f;
+        }
+        if (Input.GetKey(KeyCode.LeftShift))
+        {
+            Debug.Log("Shift pressed!");
+
+            continuousActionsOut[0]-=0.25f;
+            continuousActionsOut[1]-=0.25f;
+            continuousActionsOut[2]-=0.25f;
+            continuousActionsOut[3]-=0.25f;
+        }
+
+        if (Input.GetKey(KeyCode.W)) 
+        {
+            Debug.Log("W pressed!");
+            
+            continuousActionsOut[0]-=0.25f;
+            continuousActionsOut[1]-=0.25f;
+            continuousActionsOut[2]+=0.25f;
+            continuousActionsOut[3]+=0.25f;
+        }
+        if (Input.GetKey(KeyCode.S))
+        {
+            Debug.Log("S pressed!");
+
+            continuousActionsOut[0]+=0.25f;
+            continuousActionsOut[1]+=0.25f;
+            continuousActionsOut[2]-=0.25f;
+            continuousActionsOut[3]-=0.25f;
+        }
+
+        if (Input.GetKey(KeyCode.A))
+        {
+            Debug.Log("A pressed!");
+
+            continuousActionsOut[0]-=0.25f;
+            continuousActionsOut[1]+=0.25f;
+            continuousActionsOut[2]+=0.25f;
+            continuousActionsOut[3]-=0.25f;
+        }
+        if (Input.GetKey(KeyCode.D))
+        {
+            Debug.Log("D pressed!");
+
+            continuousActionsOut[0]+=0.25f;
+            continuousActionsOut[1]-=0.25f;
+            continuousActionsOut[2]-=0.25f;
+            continuousActionsOut[3]+=0.25f;
+        }
+
+        // continuousActionsOut[3] = 0f;
+        // if (Input.GetKey(KeyCode.Q)) continuousActionsOut[3]+=1f;
+        // if (Input.GetKey(KeyCode.E)) continuousActionsOut[3]-=1f;
+        
+        // continuousActionsOut[0] = Input.GetAxisRaw("Vertical");   // thrust
+        // continuousActionsOut[1] = Input.GetAxisRaw("Vertical");   // pitch
+        // continuousActionsOut[2] = Input.GetAxisRaw("Horizontal"); // roll
+        // continuousActionsOut[3] = Input.GetKey(KeyCode.Q) ? -1f : Input.GetKey(KeyCode.E) ? 1f : 0f; // yaw
+
     }
 
     private void OnTriggerEnter(Collider other)

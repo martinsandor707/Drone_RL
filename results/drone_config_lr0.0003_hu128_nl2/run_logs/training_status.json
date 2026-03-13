@@ -1,0 +1,65 @@
+{
+    "Drone": {
+        "checkpoints": [
+            {
+                "steps": 999996,
+                "file_path": "results/drone_config_lr0.0003_hu128_nl2/Drone/Drone-999996.onnx",
+                "reward": -1.1528601084206556,
+                "creation_time": 1773141102.2558196,
+                "auxillary_file_paths": [
+                    "results/drone_config_lr0.0003_hu128_nl2/Drone/Drone-999996.pt"
+                ]
+            },
+            {
+                "steps": 1499993,
+                "file_path": "results/drone_config_lr0.0003_hu128_nl2/Drone/Drone-1499993.onnx",
+                "reward": -1.152534130587263,
+                "creation_time": 1773141264.2431056,
+                "auxillary_file_paths": [
+                    "results/drone_config_lr0.0003_hu128_nl2/Drone/Drone-1499993.pt"
+                ]
+            },
+            {
+                "steps": 1999999,
+                "file_path": "results/drone_config_lr0.0003_hu128_nl2/Drone/Drone-1999999.onnx",
+                "reward": -1.2045703603510272,
+                "creation_time": 1773141422.5677838,
+                "auxillary_file_paths": [
+                    "results/drone_config_lr0.0003_hu128_nl2/Drone/Drone-1999999.pt"
+                ]
+            },
+            {
+                "steps": 2499999,
+                "file_path": "results/drone_config_lr0.0003_hu128_nl2/Drone/Drone-2499999.onnx",
+                "reward": -1.0785650093072814,
+                "creation_time": 1773141574.5399375,
+                "auxillary_file_paths": [
+                    "results/drone_config_lr0.0003_hu128_nl2/Drone/Drone-2499999.pt"
+                ]
+            },
+            {
+                "steps": 2875415,
+                "file_path": "results/drone_config_lr0.0003_hu128_nl2/Drone/Drone-2875415.onnx",
+                "reward": -1.1560407433422115,
+                "creation_time": 1773141693.9023588,
+                "auxillary_file_paths": [
+                    "results/drone_config_lr0.0003_hu128_nl2/Drone/Drone-2875415.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 2875415,
+            "file_path": "results/drone_config_lr0.0003_hu128_nl2/Drone.onnx",
+            "reward": -1.1560407433422115,
+            "creation_time": 1773141693.9023588,
+            "auxillary_file_paths": [
+                "results/drone_config_lr0.0003_hu128_nl2/Drone/Drone-2875415.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.1.1+cu121"
+    }
+}
