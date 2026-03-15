@@ -70,7 +70,7 @@ environment_parameters:
     - value:
         sampler_type: uniform
         sampler_parameters:
-          seed: 8862
+          seed: 1314
           min_value: 0.0
           max_value: 0.5
       name: Lesson0_Hover_Above
@@ -79,12 +79,12 @@ environment_parameters:
         measure: reward
         min_lesson_length: 100
         signal_smoothing: true
-        threshold: 1.5
+        threshold: 1.0
         require_reset: false
     - value:
         sampler_type: uniform
         sampler_parameters:
-          seed: 8863
+          seed: 1315
           min_value: 0.5
           max_value: 1.5
       name: Lesson1_Close_Proximity
@@ -93,12 +93,12 @@ environment_parameters:
         measure: reward
         min_lesson_length: 100
         signal_smoothing: true
-        threshold: 1.5
+        threshold: 2.0
         require_reset: false
     - value:
         sampler_type: uniform
         sampler_parameters:
-          seed: 8864
+          seed: 1316
           min_value: 1.5
           max_value: 2.5
       name: Lesson2_Medium_Range
@@ -112,7 +112,7 @@ environment_parameters:
     - value:
         sampler_type: uniform
         sampler_parameters:
-          seed: 8865
+          seed: 1317
           min_value: 2.5
           max_value: 4.0
       name: Lesson3_Full_Map

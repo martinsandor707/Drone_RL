@@ -1,4 +1,29 @@
 {
+    "target_spawn_radius": {
+        "lesson_num": 1
+    },
+    "DroneAgent": {
+        "checkpoints": [
+            {
+                "steps": 61567,
+                "file_path": "results/drone_config_lr0.0003_hu256_nl2/DroneAgent/DroneAgent-61567.onnx",
+                "reward": null,
+                "creation_time": 1773527736.195789,
+                "auxillary_file_paths": [
+                    "results/drone_config_lr0.0003_hu256_nl2/DroneAgent/DroneAgent-61567.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 61567,
+            "file_path": "results/drone_config_lr0.0003_hu256_nl2/DroneAgent.onnx",
+            "reward": null,
+            "creation_time": 1773527736.195789,
+            "auxillary_file_paths": [
+                "results/drone_config_lr0.0003_hu256_nl2/DroneAgent/DroneAgent-61567.pt"
+            ]
+        }
+    },
     "metadata": {
         "stats_format_version": "0.3.0",
         "mlagents_version": "1.1.0",

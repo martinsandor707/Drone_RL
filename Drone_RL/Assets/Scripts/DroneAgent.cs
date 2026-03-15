@@ -12,10 +12,12 @@ public class DroneAgent : Agent
     [HideInInspector] public int CurrentEpisode = 0;
     [HideInInspector] public float CumulativeReward = 0f;
 
+
+    private float[] currentMotors = new float[4];
+    
     public override void Initialize()
     {
         rb = GetComponent<Rigidbody>();
-        rb.centerOfMass = Vector3.zero;
         Debug.Log("DroneAgent initialized. CoM:" + rb.centerOfMass);
         CurrentEpisode = 0;
         CumulativeReward = 0f;
@@ -33,10 +35,24 @@ public class DroneAgent : Agent
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
 
+        // 1. CRITICAL FIX: Wipe the cached motor states from the previous episode
+        // TODO: Tell Gergő about this bullshit
+        // Basically the decision requester only asks for input every 5 physics frames, so
+        // When a new episode starts, the last input from the previous episode is maintained for the first 4 frames.
+        // But then again, the previous version applied forces during OnActionReceived instead of FixedUpdate,
+        // which shouldn't apply every frame (only when the decision requester runs), so I really don't know 
+        if (currentMotors != null)
+        {
+            for (int i = 0; i < currentMotors.Length; i++)
+            {
+                currentMotors[i] = 0f;
+            }
+        }
+
         // Randomize positions
         transform.localPosition = new Vector3(Random.Range(-4f, 4f), 2f, Random.Range(-4f, 4f));
-        transform.localRotation = Quaternion.Euler(0, Random.Range(0f, 360f), 0);
-
+        // transform.localRotation = Quaternion.Euler(0, Random.Range(0f, 360f), 0);
+        transform.localRotation = Quaternion.identity;
         // Spawn target strictly within the curriculum radius relative to the drone
         // We use Random.insideUnitSphere to get a uniform distribution in 3D space
         Vector3 randomOffset = Random.insideUnitSphere * spawnRadius;
@@ -93,7 +109,7 @@ public class DroneAgent : Agent
         //(CW)    M4      M3 (counter clockwise, CCW)
 
         // 4 Continuous Actions mapped from [-1, 1] to [0, 1] for thrust
-        float stable_hover_thrust = 0.5f;
+        // float stable_hover_thrust = 0.5f;
         // float collective_thrust = stable_hover_thrust + 0.3f * actions.ContinuousActions[0]; // [0.2,0.8]
         // float pitch = 0.3f * actions.ContinuousActions[1];
         // float roll  = 0.3f * actions.ContinuousActions[2];
@@ -104,22 +120,16 @@ public class DroneAgent : Agent
         // float motor3 = Mathf.Clamp(collective_thrust - pitch - roll - yaw, 0, 1);
         // float motor4 = Mathf.Clamp(collective_thrust - pitch + roll - yaw, 0, 1);
 
-        float motor1 = Mathf.Clamp(actions.ContinuousActions[0], 0, 1); // [0.2, 0.8]
-        float motor2 = Mathf.Clamp(actions.ContinuousActions[1], 0, 1);
-        float motor3 = Mathf.Clamp(actions.ContinuousActions[2], 0, 1);
-        float motor4 = Mathf.Clamp(actions.ContinuousActions[3], 0, 1);
-
+        currentMotors[0] = 0.5f + 0.3f * actions.ContinuousActions[0]; // [0.2, 0.8]
+        currentMotors[1] = 0.5f + 0.3f * actions.ContinuousActions[1];
+        currentMotors[2] = 0.5f + 0.3f * actions.ContinuousActions[2];
+        currentMotors[3] = 0.5f + 0.3f * actions.ContinuousActions[3];
+        Debug.Log("currentMotors[0]= " + currentMotors[0]+"\nContinuousActions[0]= " +actions.ContinuousActions[0]);
         // TODO: Consider renormalizing the motors after mixing
         
         
 
-        // Since we are building the drone from scratch instead of importing preexisting models
-        // We'll just simply apply the force at each motor's position, and let Unity's physics engine
-        // figure out the rest. (Gravity, torque, drag, etc...)
-        ApplyMotorForce(motor1, new Vector3(0.3f, 0.1f, 0.3f));
-        ApplyMotorForce(motor2, new Vector3(0.3f, 0.1f, -0.3f));
-        ApplyMotorForce(motor3, new Vector3(-0.3f, 0.1f, -0.3f));
-        ApplyMotorForce(motor4, new Vector3(-0.3f, 0.1f, 0.3f));
+        
 
         // 1. Reaching the target
         float currentDistanceToTarget = Vector3.Distance(transform.localPosition, target.localPosition);
@@ -180,11 +190,25 @@ public class DroneAgent : Agent
         AddReward(-0.001f);
     }
 
+    private void FixedUpdate()
+    {
+        // Since we are building the drone from scratch instead of importing preexisting models
+        // We'll just simply apply the force at each motor's position, and let Unity's physics engine
+        // figure out the rest. (Gravity, torque, drag, etc...)
+
+        ApplyMotorForce(currentMotors[0], new Vector3( 0.3f, 0.1f,  0.3f));
+        ApplyMotorForce(currentMotors[1], new Vector3( 0.3f, 0.1f, -0.3f));
+        ApplyMotorForce(currentMotors[2], new Vector3(-0.3f, 0.1f, -0.3f));
+        ApplyMotorForce(currentMotors[3], new Vector3(-0.3f, 0.1f,  0.3f));
+
+
+    }
+
     private void ApplyMotorForce(float thrust, Vector3 localPosition)
     {
         Debug.Log("Applying thrust to motor: " +thrust);
         float hoverThrust = rb.mass * Mathf.Abs(Physics.gravity.y); // e.g. 9.8 * mass
-        float maxThrust = hoverThrust / (4 * 0.5f); // so that 4 motors at thrust=0.5 hover
+        float maxThrust = hoverThrust / 2; // so that 4 motors at thrust=0.5 hover
         rb.AddForceAtPosition(transform.up * thrust * maxThrust, transform.TransformPoint(localPosition));
     }
 

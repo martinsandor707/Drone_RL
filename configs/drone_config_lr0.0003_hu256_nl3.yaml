@@ -1,0 +1,74 @@
+behaviors:
+  DroneAgent:
+    hyperparameters:
+      batch_size: 1024
+      beta: 0.005
+      buffer_size: 10240
+      epsilon: 0.2
+      lambd: 0.95
+      learning_rate: 0.0003
+      learning_rate_schedule: linear
+      num_epoch: 3
+    max_steps: 5000000
+    network_settings:
+      hidden_units: 256
+      normalize: true
+      num_layers: 3
+    reward_signals:
+      curiosity:
+        gamma: 0.99
+        learning_rate: 0.0003
+        network_settings:
+          hidden_units: 256
+        strength: 0.02
+      extrinsic:
+        gamma: 0.99
+        strength: 1.0
+    summary_freq: 10000
+    time_horizon: 64
+    trainer_type: ppo
+environment_parameters:
+  target_spawn_radius:
+    curriculum:
+    - completion_criteria:
+        behavior: DroneAgent
+        measure: reward
+        min_lesson_length: 100
+        signal_smoothing: true
+        threshold: 1.0
+      name: Lesson0_Hover_Above
+      value:
+        sampler_parameters:
+          max_value: 0.5
+          min_value: 0.0
+        sampler_type: uniform
+    - completion_criteria:
+        behavior: DroneAgent
+        measure: reward
+        min_lesson_length: 100
+        signal_smoothing: true
+        threshold: 2.0
+      name: Lesson1_Close_Proximity
+      value:
+        sampler_parameters:
+          max_value: 1.5
+          min_value: 0.5
+        sampler_type: uniform
+    - completion_criteria:
+        behavior: DroneAgent
+        measure: reward
+        min_lesson_length: 100
+        signal_smoothing: true
+        threshold: 1.5
+      name: Lesson2_Medium_Range
+      value:
+        sampler_parameters:
+          max_value: 2.5
+          min_value: 1.5
+        sampler_type: uniform
+    - name: Lesson3_Full_Map
+      value:
+        sampler_parameters:
+          max_value: 4.0
+          min_value: 2.5
+        sampler_type: uniform

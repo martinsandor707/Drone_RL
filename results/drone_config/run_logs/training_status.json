@@ -1,62 +1,62 @@
 {
     "target_spawn_radius": {
-        "lesson_num": 1
+        "lesson_num": 3
     },
     "DroneAgent": {
         "checkpoints": [
             {
-                "steps": 1999996,
-                "file_path": "results/drone_config/DroneAgent/DroneAgent-1999996.onnx",
-                "reward": -1.2461565775530679,
-                "creation_time": 1773165789.4397476,
+                "steps": 499973,
+                "file_path": "results/drone_config/DroneAgent/DroneAgent-499973.onnx",
+                "reward": 2.507260847951357,
+                "creation_time": 1773529038.8474638,
                 "auxillary_file_paths": [
-                    "results/drone_config/DroneAgent/DroneAgent-1999996.pt"
+                    "results/drone_config/DroneAgent/DroneAgent-499973.pt"
                 ]
             },
             {
-                "steps": 2499994,
-                "file_path": "results/drone_config/DroneAgent/DroneAgent-2499994.onnx",
-                "reward": -1.0994206011602785,
-                "creation_time": 1773165948.3915596,
+                "steps": 999995,
+                "file_path": "results/drone_config/DroneAgent/DroneAgent-999995.onnx",
+                "reward": 2.2532250493405814,
+                "creation_time": 1773529141.306398,
                 "auxillary_file_paths": [
-                    "results/drone_config/DroneAgent/DroneAgent-2499994.pt"
+                    "results/drone_config/DroneAgent/DroneAgent-999995.pt"
                 ]
             },
             {
-                "steps": 2999997,
-                "file_path": "results/drone_config/DroneAgent/DroneAgent-2999997.onnx",
-                "reward": -1.0519406486575196,
-                "creation_time": 1773166105.6243725,
+                "steps": 1499996,
+                "file_path": "results/drone_config/DroneAgent/DroneAgent-1499996.onnx",
+                "reward": 2.2458345095316568,
+                "creation_time": 1773529248.5436263,
                 "auxillary_file_paths": [
-                    "results/drone_config/DroneAgent/DroneAgent-2999997.pt"
+                    "results/drone_config/DroneAgent/DroneAgent-1499996.pt"
                 ]
             },
             {
-                "steps": 3499994,
-                "file_path": "results/drone_config/DroneAgent/DroneAgent-3499994.onnx",
-                "reward": -1.022080219573662,
-                "creation_time": 1773166260.5622978,
+                "steps": 1999994,
+                "file_path": "results/drone_config/DroneAgent/DroneAgent-1999994.onnx",
+                "reward": 2.2213393891130693,
+                "creation_time": 1773529358.048107,
                 "auxillary_file_paths": [
-                    "results/drone_config/DroneAgent/DroneAgent-3499994.pt"
+                    "results/drone_config/DroneAgent/DroneAgent-1999994.pt"
                 ]
             },
             {
-                "steps": 3511291,
-                "file_path": "results/drone_config/DroneAgent/DroneAgent-3511291.onnx",
-                "reward": -1.0303189745209096,
-                "creation_time": 1773166264.0536523,
+                "steps": 2008822,
+                "file_path": "results/drone_config/DroneAgent/DroneAgent-2008822.onnx",
+                "reward": 2.21866431202687,
+                "creation_time": 1773529360.0703547,
                 "auxillary_file_paths": [
-                    "results/drone_config/DroneAgent/DroneAgent-3511291.pt"
+                    "results/drone_config/DroneAgent/DroneAgent-2008822.pt"
                 ]
             }
         ],
         "final_checkpoint": {
-            "steps": 3511291,
+            "steps": 2008822,
             "file_path": "results/drone_config/DroneAgent.onnx",
-            "reward": -1.0303189745209096,
-            "creation_time": 1773166264.0536523,
+            "reward": 2.21866431202687,
+            "creation_time": 1773529360.0703547,
             "auxillary_file_paths": [
-                "results/drone_config/DroneAgent/DroneAgent-3511291.pt"
+                "results/drone_config/DroneAgent/DroneAgent-2008822.pt"
             ]
         }
     },

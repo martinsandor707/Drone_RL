@@ -1,0 +1,50 @@
+{
+    "target_spawn_radius": {
+        "lesson_num": 3
+    },
+    "DroneAgent": {
+        "checkpoints": [
+            {
+                "steps": 499951,
+                "file_path": "results/drone_config_lr0.001_hu256_nl3_no_curiosity/DroneAgent/DroneAgent-499951.onnx",
+                "reward": 2.2989862842753364,
+                "creation_time": 1773529623.1871533,
+                "auxillary_file_paths": [
+                    "results/drone_config_lr0.001_hu256_nl3_no_curiosity/DroneAgent/DroneAgent-499951.pt"
+                ]
+            },
+            {
+                "steps": 999985,
+                "file_path": "results/drone_config_lr0.001_hu256_nl3_no_curiosity/DroneAgent/DroneAgent-999985.onnx",
+                "reward": 2.2240299386867686,
+                "creation_time": 1773529727.907671,
+                "auxillary_file_paths": [
+                    "results/drone_config_lr0.001_hu256_nl3_no_curiosity/DroneAgent/DroneAgent-999985.pt"
+                ]
+            },
+            {
+                "steps": 1001615,
+                "file_path": "results/drone_config_lr0.001_hu256_nl3_no_curiosity/DroneAgent/DroneAgent-1001615.onnx",
+                "reward": 2.2241525922132577,
+                "creation_time": 1773529728.199875,
+                "auxillary_file_paths": [
+                    "results/drone_config_lr0.001_hu256_nl3_no_curiosity/DroneAgent/DroneAgent-1001615.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 1001615,
+            "file_path": "results/drone_config_lr0.001_hu256_nl3_no_curiosity/DroneAgent.onnx",
+            "reward": 2.2241525922132577,
+            "creation_time": 1773529728.199875,
+            "auxillary_file_paths": [
+                "results/drone_config_lr0.001_hu256_nl3_no_curiosity/DroneAgent/DroneAgent-1001615.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.1.1+cu121"
+    }
+}

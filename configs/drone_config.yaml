@@ -38,7 +38,7 @@ environment_parameters:
           behavior: DroneAgent
           signal_smoothing: true
           min_lesson_length: 100
-          threshold: 2
+          threshold: 1
         value:
           sampler_type: uniform
           sampler_parameters:

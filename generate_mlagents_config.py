@@ -52,8 +52,41 @@ class Behavior(BaseModel):
     summary_freq: int = 10000
 
 
+class SamplerParameters(BaseModel):
+    min_value: float
+    max_value: float
+
+
+class CurriculumValue(BaseModel):
+    sampler_type: str
+    sampler_parameters: SamplerParameters
+
+
+class CompletionCriteria(BaseModel):
+    measure: str
+    behavior: str
+    signal_smoothing: bool
+    min_lesson_length: int
+    threshold: float
+
+
+class CurriculumLesson(BaseModel):
+    name: str
+    completion_criteria: Optional[CompletionCriteria] = None
+    value: CurriculumValue
+
+
+class TargetSpawnRadius(BaseModel):
+    curriculum: list[CurriculumLesson]
+
+
+class EnvironmentParameters(BaseModel):
+    target_spawn_radius: TargetSpawnRadius
+
+
 class MLAgentsConfig(BaseModel):
     behaviors: dict[str, Behavior]
+    environment_parameters: Optional[EnvironmentParameters] = None
 
 
 # 2. Define your search space
@@ -66,6 +99,64 @@ permutations = list(
     itertools.product(learning_rates, hidden_units_options, num_layers_options)
 )
 
+curriculum_data = {
+    "target_spawn_radius": {
+        "curriculum": [
+            {
+                "name": "Lesson0_Hover_Above",
+                "completion_criteria": {
+                    "measure": "reward",
+                    "behavior": "DroneAgent",
+                    "signal_smoothing": True,
+                    "min_lesson_length": 100,
+                    "threshold": 1.0,
+                },
+                "value": {
+                    "sampler_type": "uniform",
+                    "sampler_parameters": {"min_value": 0.0, "max_value": 0.5},
+                },
+            },
+            {
+                "name": "Lesson1_Close_Proximity",
+                "completion_criteria": {
+                    "measure": "reward",
+                    "behavior": "DroneAgent",
+                    "signal_smoothing": True,
+                    "min_lesson_length": 100,
+                    "threshold": 2.0,
+                },
+                "value": {
+                    "sampler_type": "uniform",
+                    "sampler_parameters": {"min_value": 0.5, "max_value": 1.5},
+                },
+            },
+            {
+                "name": "Lesson2_Medium_Range",
+                "completion_criteria": {
+                    "measure": "reward",
+                    "behavior": "DroneAgent",
+                    "signal_smoothing": True,
+                    "min_lesson_length": 100,
+                    "threshold": 1.5,
+                },
+                "value": {
+                    "sampler_type": "uniform",
+                    "sampler_parameters": {"min_value": 1.5, "max_value": 2.5},
+                },
+            },
+            {
+                "name": "Lesson3_Full_Map",
+                "value": {
+                    "sampler_type": "uniform",
+                    "sampler_parameters": {"min_value": 2.5, "max_value": 4.0},
+                },
+            },
+        ]
+    }
+}
+
+env_params = EnvironmentParameters(**curriculum_data)
+
 for i, (lr, hu, nl) in enumerate(permutations):
     config = MLAgentsConfig(
         behaviors={
@@ -73,7 +164,8 @@ for i, (lr, hu, nl) in enumerate(permutations):
                 hyperparameters=Hyperparameters(learning_rate=lr),
                 network_settings=NetworkSettings(hidden_units=hu, num_layers=nl),
             )
-        }
+        },
+        environment_parameters=env_params,
     )
 
     filename = f"configs/drone_config_lr{lr}_hu{hu}_nl{nl}.yaml"
